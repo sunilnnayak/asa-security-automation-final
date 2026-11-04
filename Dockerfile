@@ -1,4 +1,4 @@
-# Minimal pinned Python runtime; update deliberately after vulnerability review.
+# Maintained Python 3.11 slim runtime; pin an approved digest for production.
 FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
