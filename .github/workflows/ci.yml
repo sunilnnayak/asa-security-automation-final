@@ -60,7 +60,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m pip install bandit==1.7.10
+      - run: python -m pip install bandit==1.9.4
       - run: mkdir -p reports
       - name: Scan application source
         run: bandit -r app -f json -o reports/sast.bandit.json -lll
@@ -80,7 +80,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m pip install pip-audit==2.7.3
+      - run: python -m pip install pip-audit==2.10.1
       - run: mkdir -p reports
       - name: Audit Python dependencies
         run: pip-audit -r requirements.txt -f json -o reports/sca.pip-audit.json
@@ -129,7 +129,7 @@ jobs:
         run: docker build -t vulntracker:${{ github.sha }} .
       - run: mkdir -p reports
       - name: Scan image for critical and high vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: vulntracker:${{ github.sha }}
           format: json
@@ -156,7 +156,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m pip install checkov==3.2.342
+      - run: python -m pip install checkov==3.4.3
       - run: mkdir -p reports
       - name: Render Helm chart
         run: helm template vulntracker helm/vulntracker --namespace vulntracker > reports/helm-rendered.yaml
