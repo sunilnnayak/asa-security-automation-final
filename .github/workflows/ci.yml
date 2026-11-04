@@ -1,0 +1,153 @@
+name: Security Automation CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-python:
+    name: Python API tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+      - name: Run Python tests
+        env:
+          SECRET_KEY: test-only-secret-key-change-me-1234567890
+        run: pytest tests/ -v
+
+  test-notify:
+    name: Notification service tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: notify/package-lock.json
+      - name: Install dependencies
+        working-directory: notify
+        run: npm ci
+      - name: Run Node.js tests
+        working-directory: notify
+        run: npm test
+
+  sast:
+    name: SAST - Bandit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install bandit==1.7.10
+      - run: mkdir -p reports
+      - name: Scan application source
+        run: bandit -r app -f json -o reports/sast.bandit.json -lll
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sast-bandit-report
+          path: reports/sast.bandit.json
+          if-no-files-found: ignore
+
+  sca:
+    name: SCA - pip-audit and npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install pip-audit==2.7.3
+      - run: mkdir -p reports
+      - name: Audit Python dependencies
+        run: pip-audit -r requirements.txt -f json -o reports/sca.pip-audit.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Capture Node.js dependency report
+        working-directory: notify
+        run: npm audit --json > ../reports/sca.npm-audit.json || true
+      - name: Fail on high or critical Node.js dependency vulnerabilities
+        working-directory: notify
+        run: npm audit --audit-level=high
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sca-reports
+          path: reports/sca.*.json
+          if-no-files-found: ignore
+
+  container-scan:
+    name: Container scan - Trivy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build application image
+        run: docker build -t vulntracker:${{ github.sha }} .
+      - run: mkdir -p reports
+      - name: Scan image for critical and high vulnerabilities
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: vulntracker:${{ github.sha }}
+          format: json
+          output: reports/container.trivy.json
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: container-trivy-report
+          path: reports/container.trivy.json
+          if-no-files-found: ignore
+
+  iac-scan:
+    name: IaC scan - Checkov
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install checkov==3.2.342
+      - run: mkdir -p reports
+      - name: Scan Helm chart configuration
+        run: checkov -d helm/vulntracker --framework helm -o json --output-file-path reports/iac.checkov.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iac-checkov-report
+          path: reports/iac.checkov.json
+          if-no-files-found: ignore
+
+  helm-validation:
+    name: Helm chart validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+      - name: Lint chart
+        run: helm lint helm/vulntracker
+      - name: Render chart templates
+        run: helm template vulntracker helm/vulntracker --namespace vulntracker > /tmp/vulntracker-rendered.yaml
