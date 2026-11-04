@@ -129,7 +129,7 @@ jobs:
         run: docker build -t vulntracker:${{ github.sha }} .
       - run: mkdir -p reports
       - name: Scan image for critical and high vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: vulntracker:${{ github.sha }}
           format: json
