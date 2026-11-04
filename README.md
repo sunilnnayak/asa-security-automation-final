@@ -133,6 +133,12 @@ The selected tools are:
 | Container | Trivy | Built FastAPI image |
 | IaC | Checkov | Helm chart |
 
+## Continuous security automation
+
+GitHub Actions is configured in `.github/workflows/ci.yml`. It runs on pushes, pull requests and manual dispatch. The workflow separates application tests, Bandit SAST, Python and Node.js dependency audits, Trivy image scanning, Checkov scanning of rendered Kubernetes manifests, and Helm validation. Scanner outputs are uploaded as workflow artifacts even when a scan fails. High/critical findings are intended to block the relevant security job; a red security job means findings or a tool failure must be investigated, not ignored.
+
+Dependabot is configured in `.github/dependabot.yml` to check Python, Node.js and GitHub Actions dependencies weekly and open update pull requests.
+
 Run the scans after the final code and deployment artifacts are ready:
 
 ```bash
