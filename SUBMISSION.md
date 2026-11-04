@@ -19,12 +19,13 @@ The default branch is `main`.
 - Python and Node.js tests.
 - GitHub Actions workflow for tests, SAST, Python/Node SCA, container scanning, IaC scanning and Helm validation.
 - Dependabot configuration for Python, Node.js and GitHub Actions dependencies.
+- Refreshed Python dependency pins and replaced python-jose with PyJWT; fresh tests and SCA confirmation are pending.
 - Historical scanner JSON snapshots under `reports/`.
 - Validation limitations and required follow-up steps in `docs/validation-status.md`.
 
 ## Verification status at submission time
 
-The source tree passed Python bytecode compilation and JavaScript syntax checks in the preparation environment. The GitHub Actions workflow has been committed, but its latest execution has not been independently verified here.
+The source tree passed Python bytecode compilation and JavaScript syntax checks in the preparation environment. Python dependency pins were refreshed, including replacing python-jose with PyJWT, but the updated dependencies could not be installed and runtime tests could not be repeated locally. The GitHub Actions workflow has been committed, but its latest execution has not been independently verified here.
 
 The scanner reports in `reports/` are historical snapshots dated 2026-11-04. They are not a fresh scan of the latest commit. They show outstanding dependency and container findings, and the historical Checkov report evaluated zero resources. The updated workflow now checks rendered Kubernetes manifests and fails if zero resources are evaluated.
 
