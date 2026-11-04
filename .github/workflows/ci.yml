@@ -64,7 +64,7 @@ jobs:
       - run: mkdir -p reports
       - name: Scan application source
         run: bandit -r app -f json -o reports/sast.bandit.json -lll
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: sast-bandit-report
@@ -84,7 +84,7 @@ jobs:
       - run: mkdir -p reports
       - name: Audit Python dependencies
         run: pip-audit -r requirements.txt -f json -o reports/sca.pip-audit.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: sca-python-report
@@ -112,7 +112,7 @@ jobs:
       - name: Fail on high or critical vulnerabilities
         working-directory: notify
         run: npm audit --audit-level=high
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: sca-node-report
@@ -136,7 +136,7 @@ jobs:
           output: reports/container.trivy.json
           severity: CRITICAL,HIGH
           exit-code: "1"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: container-trivy-report
@@ -164,7 +164,7 @@ jobs:
         run: checkov -f reports/helm-rendered.yaml --framework kubernetes -o json --output-file-path reports/iac.checkov.json
       - name: Verify that IaC resources were evaluated
         run: python -c "import json; r=json.load(open('reports/iac.checkov.json', encoding='utf-8')); n=r.get('resource_count', 0); print(f'Checkov evaluated {n} resources'); assert n > 0, 'Checkov evaluated zero resources'"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: iac-checkov-report
