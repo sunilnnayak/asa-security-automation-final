@@ -1,0 +1,31 @@
+replicaCount: 2
+image:
+  repository: vulntracker
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 8000
+publicBaseUrl: "https://vulntracker.example.com"
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+# Set this to the private CIDR of the managed database (for example an RDS subnet).
+database:
+  cidr: ""
+  port: 5432
+externalSecret:
+  enabled: true
+  refreshInterval: 1h
+  secretStoreName: aws-secrets-manager
+  remoteKey: production/vulntracker
+  targetName: vulntracker-runtime
+ingress:
+  enabled: false
+  className: nginx
+  host: vulntracker.example.com
+  tlsSecretName: vulntracker-tls
