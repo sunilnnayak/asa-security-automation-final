@@ -1,5 +1,5 @@
 # Minimal pinned Python runtime; update deliberately after vulnerability review.
-FROM python:3.11.11-slim-bookworm
+FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
